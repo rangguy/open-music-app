@@ -11,7 +11,7 @@ const SongsValidator = {
   validateSongQuery: (query) => {
     const validationResultQuery = SongQuerySchema.validate(query);
     if (validationResultQuery.error) {
-      throw new InvariantError(validationResultQuery.error.message);
+      throw new Error(validationResultQuery.error.message);
     }
     return validationResultQuery;
   },
