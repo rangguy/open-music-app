@@ -1,13 +1,11 @@
+const autoBind = require("auto-bind");
+
 class SongsHandler {
   constructor(service, validator) {
     this._service = service;
     this._validator = validator;
 
-    this.postSongHandler = this.postSongHandler.bind(this);
-    this.getSongsHandler = this.getSongsHandler.bind(this);
-    this.getSongByIdHandler = this.getSongByIdHandler.bind(this);
-    this.putSongByIdHandler = this.putSongByIdHandler.bind(this);
-    this.deleteSongByIdHandler = this.deleteSongByIdHandler.bind(this);
+    autoBind(this);
   }
 
   async postSongHandler(request, h) {
@@ -37,13 +35,7 @@ class SongsHandler {
   }
 
   async getSongsHandler() {
-    const song = await this._service.getSongs();
-
-    const songs = song.map(({ id, title, performer }) => ({
-      id,
-      title,
-      performer,
-    }));
+    const songs = await this._service.getSongs();
 
     return {
       status: "success",
@@ -66,7 +58,7 @@ class SongsHandler {
   }
 
   async putSongByIdHandler(request) {
-    this._validator.validateNotePayload(request.payload);
+    this._validator.validateSongPayload(request.payload);
     const { id } = request.params;
 
     await this._service.editSongById(id, request.payload);
