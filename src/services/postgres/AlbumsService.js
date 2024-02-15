@@ -13,16 +13,14 @@ class AlbumsService {
     const randomString = nanoid(16);
     const id = `album-${randomString}`;
     const createdAt = new Date().toISOString();
-    const updatedAt = createdAt;
 
     const query = {
-      text: "INSERT INTO albums VALUES($1, $2, $3, $4, $5) RETURNING id",
-      values: [id, name, year, createdAt, updatedAt],
+      text: "INSERT INTO albums VALUES($1, $2, $3, $4, $4) RETURNING id",
+      values: [id, name, year, createdAt],
     };
 
     const result = await this._pool.query(query);
 
-    // pengecekan apakah terdapat id, jika tidak maka throw invarianterror
     if (!result.rows[0].id) {
       throw new InvariantError("Album gagal ditambahkan");
     }
@@ -43,11 +41,11 @@ class AlbumsService {
     };
     const resultSongs = await this._pool.query(querySongs);
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError("Album tidak ditemukan");
     }
 
-    const album = result.rows.map(mapAlbumToModel)[0];
+    const album = mapAlbumToModel(result.rows[0]);
 
     if (resultSongs.rows.length > 0) {
       const songs = resultSongs.rows.map(mapSongToModel);
