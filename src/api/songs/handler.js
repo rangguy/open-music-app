@@ -1,3 +1,4 @@
+/* eslint-disable operator-linebreak */
 const autoBind = require("auto-bind");
 
 class SongsHandler {
@@ -10,9 +11,9 @@ class SongsHandler {
 
   async postSongHandler(request, h) {
     this._validator.validateSongPayload(request.payload);
-    const {
-      title, year, performer, genre, duration, albumId,
-    } = request.payload;
+    // eslint-disable-next-line object-curly-newline
+    const { title, year, performer, genre, duration, albumId } =
+      request.payload;
 
     const songId = await this._service.addSong({
       title,
@@ -34,8 +35,19 @@ class SongsHandler {
     return response;
   }
 
-  async getSongsHandler() {
-    const songs = await this._service.getSongs();
+  async getSongsHandler(request) {
+    const { title = "", performer = "" } = request.query;
+    let songs;
+
+    if (title && performer) {
+      songs = await this._service.getSongByTitleAndPerformer(title, performer);
+    } else if (title) {
+      songs = await this._service.getSongByTitle(title);
+    } else if (performer) {
+      songs = await this._service.getSongByPerformer(performer);
+    } else {
+      songs = await this._service.getSongs();
+    }
 
     return {
       status: "success",

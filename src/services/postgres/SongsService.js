@@ -43,7 +43,9 @@ class SongsService {
   }
 
   async getSongs() {
-    const result = await this._pool.query("SELECT id, title, performer FROM songs");
+    const result = await this._pool.query(
+      "SELECT id, title, performer FROM songs",
+    );
     return result.rows.map(mapSongToModel);
   }
 
@@ -88,6 +90,51 @@ class SongsService {
     if (!result.rows.length) {
       throw new NotFoundError("Lagu gagal dihapus. Id tidak ditemukan");
     }
+  }
+
+  async getSongByTitle(title) {
+    const query = {
+      text: "SELECT id, title, performer FROM songs WHERE title ILIKE $1",
+      values: [`%${title}%`],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new NotFoundError("Nama lagu tidak ditemukan!");
+    }
+
+    return result.rows.map(mapSongToModel);
+  }
+
+  async getSongByPerformer(performer) {
+    const query = {
+      text: "SELECT id, title, performer FROM songs WHERE performer ILIKE $1",
+      values: [`%${performer}%`],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new NotFoundError("Artis tidak ditemukan!");
+    }
+
+    return result.rows.map(mapSongToModel);
+  }
+
+  async getSongByTitleAndPerformer(title, performer) {
+    const query = {
+      text: "SELECT id, title, performer FROM songs WHERE title ILIKE $1 AND performer ILIKE $2",
+      values: [`%${title}%`, `%${performer}%`],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new NotFoundError("Nama lagu atau artis tidak ditemukan!");
+    }
+
+    return result.rows.map(mapSongToModel);
   }
 }
 
