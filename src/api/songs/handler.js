@@ -36,6 +36,7 @@ class SongsHandler {
   }
 
   async getSongsHandler(request) {
+    await this._validator.validateSongQuery(request.query);
     const { title = "", performer = "" } = request.query;
     let songs;
 
