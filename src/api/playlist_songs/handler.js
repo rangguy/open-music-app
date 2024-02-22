@@ -1,20 +1,25 @@
 const autoBind = require("auto-bind");
 
 class PlaylistSongsHandler {
-  constructor(service, validator) {
+  constructor(service, validator, playlistsService) {
     this._service = service;
     this._validator = validator;
+    this._playlistsService = playlistsService;
 
     autoBind(this);
   }
 
   async postPlaylistSongHandler(request, h) {
-    const { id: playlistId } = request.params;
     this._validator.validatePlaylistSongPayload(request.payload);
+
+    const { id: playlistId } = request.params;
     const { songId } = request.payload;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
     await this._service.verifySongId(songId);
 
-    await this._service.addPlaylistSong({ playlistId, songId });
+    await this._service.addPlaylistSong(playlistId, songId);
 
     const response = h.response({
       status: "success",
@@ -25,21 +30,34 @@ class PlaylistSongsHandler {
   }
 
   async getPlaylistSongsHandler(request) {
-    const { id: playlistId } = request.params;
-    const playlist = this._service.getPlaylistSongs(playlistId);
+    const { id: credentialId } = request.auth.credentials;
+    const { id } = request.params;
+
+    await this._playlistsService.verifyPlaylistOwner(id, credentialId);
+
+    const playlist = await this._service.getPlaylistSongs(id);
+    const { name, username, songs } = playlist;
 
     return {
       status: "success",
       data: {
-        playlist,
+        playlist: {
+          id,
+          name,
+          username,
+          songs,
+        },
       },
     };
   }
 
   async deletePlaylistSongHandler(request) {
-    const { id: playlistId } = request.params;
     this._validator.validatePlaylistSongPayload(request.payload);
+    const { id: credentialId } = request.auth.credentials;
+    const { id: playlistId } = request.params;
     const { songId } = request.payload;
+
+    await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
 
     await this._service.deletePlaylistSong(songId, playlistId);
 

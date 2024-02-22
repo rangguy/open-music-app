@@ -1,7 +1,9 @@
+/* eslint-disable max-len */
 const { nanoid } = require("nanoid");
 const { Pool } = require("pg");
 const InvariantError = require("../../exceptions/InvariantError");
 const NotFoundError = require("../../exceptions/NotFoundError");
+const { mapPlaylistToModel, mapSongToModel } = require("../../utils");
 
 class PlaylistSongsService {
   constructor() {
@@ -9,8 +11,8 @@ class PlaylistSongsService {
   }
 
   async addPlaylistSong(playlistId, songId) {
+    await this.checkSongInPlaylist(playlistId, songId);
     const id = `playlist-songs-${nanoid(16)}`;
-
     const query = {
       text: "INSERT INTO playlist_songs VALUES ($1, $2, $3)",
       values: [id, playlistId, songId],
@@ -18,55 +20,53 @@ class PlaylistSongsService {
 
     const result = await this._pool.query(query);
 
-    if (!result.rows.length) {
-      throw new InvariantError("Lagu gagal ditambahkan ke dalam playlist");
+    if (!result.rowCount) {
+      throw new Error("Gagal menambahkan lagu ke dalam playlist");
     }
   }
 
   async getPlaylistSongs(playlistId) {
     const queryplaylist = {
-      text: "SELECT p.id AS id, p.name AS name, u.username AS owner FROM playlists AS p LEFT JOIN users AS u ON p.owner = u.id WHERE p.owner = $1",
+      text: "SELECT p.id AS id, p.name AS name, u.username AS owner FROM playlists AS p LEFT JOIN users AS u ON p.owner = u.id WHERE p.id = $1",
       values: [playlistId],
     };
 
     const resultPlaylist = await this._pool.query(queryplaylist);
 
-    if (!resultPlaylist.rowCount) {
+    if (!resultPlaylist.rows.length) {
       throw new InvariantError("Playlist kosong");
     }
 
+    const playlistData = mapPlaylistToModel(resultPlaylist.rows[0]);
+
     const querySongs = {
-      text: "SELECT s.id, s.title, s.year, s.performer FROM songs AS s INNER JOIN playlist_songs AS ps ON s.id = ps.song_id WHERE ps.playlist_id = $1",
+      text: "SELECT s.id, s.title, s.performer FROM songs AS s INNER JOIN playlist_songs AS ps ON s.id = ps.song_id WHERE ps.playlist_id = $1",
       values: [playlistId],
     };
 
     const resultSongs = await this._pool.query(querySongs);
 
-    const playlistData = resultPlaylist.rows[0];
-    const songsData = resultSongs.rows;
+    if (resultSongs.rows.length > 0) {
+      const songs = resultSongs.rows.map(mapSongToModel);
+      playlistData.songs = songs;
+    } else {
+      playlistData.songs = [];
+    }
 
-    return {
-      playlist: {
-        id: playlistData.playlist_id,
-        name: playlistData.playlist_name,
-        owner: playlistData.owner,
-      },
-      songs: songsData,
-    };
+    return playlistData;
   }
 
   async deletePlaylistSong(songId, playlistId) {
     const query = {
-      text: "DELETE FROM playlist_songs WHERE song_id = $1 AND playlist_id = $2",
+      text: "DELETE FROM playlist_songs WHERE song_id = $1 AND playlist_id = $2 RETURNING id",
       values: [songId, playlistId],
     };
 
     const result = await this._pool.query(query);
 
-    if (!result.rows.length) {
+    if (result.rowCount === 0) {
       throw new NotFoundError(
-        // eslint-disable-next-line comma-dangle
-        "Lagu gagal dihapus dari playlist. Id tidak ditemukan"
+        `Lagu dengan id ${songId} tidak ditemukan di dalam playlist dengan id ${playlistId}`,
       );
     }
   }
@@ -81,6 +81,19 @@ class PlaylistSongsService {
 
     if (!checkSongResult.rows.length) {
       throw new NotFoundError("Invalid song id");
+    }
+  }
+
+  async checkSongInPlaylist(playlistId, songId) {
+    const query = {
+      text: "SELECT * FROM playlist_songs WHERE playlist_id = $1 AND song_id = $2",
+      values: [playlistId, songId],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (result.rows.length > 0) {
+      throw new InvariantError("Lagu telah ada di dalam playlist");
     }
   }
 }
