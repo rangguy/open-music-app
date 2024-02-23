@@ -52,7 +52,6 @@ class CollaborationsService {
   }
 
   async verifyCollaborator(playlistId, userId) {
-    console.log("masuk di verify collaborator");
     const query = {
       text: "SELECT * FROM collaborations WHERE playlist_id = $1 AND user_id = $2",
       values: [playlistId, userId],

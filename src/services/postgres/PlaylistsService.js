@@ -72,30 +72,23 @@ class PlaylistsService {
     }
     const playlist = result.rows[0];
     if (playlist.owner !== owner) {
-      console.log("loh masuk sini");
       throw new AuthorizationError("Anda tidak berhak mengakses resource ini");
     }
   }
 
   async verifyPlaylistAccess(playlistId, userId) {
     try {
-      console.log("masuk verify play list access");
-      console.log(`${playlistId}`);
-      console.log(`${userId}`);
       await this.verifyPlaylistOwner(playlistId, userId);
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw error;
       }
       try {
-        console.log("di try 2");
         await this._collaborationsService.verifyCollaborator(
           playlistId,
           userId,
         );
-        console.log("setelah verifyCollaborator");
       } catch {
-        console.log(error.message);
         throw error;
       }
     }
