@@ -4,11 +4,13 @@ const InvariantError = require("../../exceptions/InvariantError");
 const { mapPlaylistToModel } = require("../../utils");
 const NotFoundError = require("../../exceptions/NotFoundError");
 const AuthorizationError = require("../../exceptions/AuthorizationError");
+const CollaborationsService = require("./CollaborationsService");
 
 class PlaylistsService {
-  constructor(collaborationService) {
+  constructor(collaborationsService) {
     this._pool = new Pool();
-    this._collaborationService = collaborationService;
+    this._collaborationsService = new CollaborationsService();
+    this._collaborationsService2 = collaborationsService;
   }
 
   async addPlaylist({ name, owner }) {
@@ -70,6 +72,7 @@ class PlaylistsService {
     }
     const playlist = result.rows[0];
     if (playlist.owner !== owner) {
+      console.log("loh masuk sini");
       throw new AuthorizationError("Anda tidak berhak mengakses resource ini");
     }
   }
@@ -86,8 +89,13 @@ class PlaylistsService {
       }
       try {
         console.log("di try 2");
-        await this._collaborationService.verifyCollaborator(playlistId, userId);
+        await this._collaborationsService.verifyCollaborator(
+          playlistId,
+          userId,
+        );
+        console.log("setelah verifyCollaborator");
       } catch {
+        console.log(error.message);
         throw error;
       }
     }

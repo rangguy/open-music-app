@@ -16,9 +16,8 @@ class PlaylistSongsHandler {
     const { songId } = request.payload;
     const { id: credentialId } = request.auth.credentials;
 
-    // console.log("Before cek akses");
     await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
-    // console.log("After cek akses");
+
     await this._service.verifySongId(songId);
 
     await this._service.addPlaylistSong(playlistId, songId);
