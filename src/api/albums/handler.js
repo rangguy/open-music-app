@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-newline */
 const autoBind = require('auto-bind');
 
 class AlbumsHandler {
@@ -28,7 +29,7 @@ class AlbumsHandler {
   async getAlbumByIdHandler(request) {
     const { id } = request.params;
     const album = await this._service.getAlbumById(id);
-    const { name, year, songs } = album;
+    const { name, year, coverUrl, songs } = album;
 
     return {
       status: "success",
@@ -37,6 +38,7 @@ class AlbumsHandler {
           id,
           name,
           year,
+          coverUrl,
           songs,
         },
       },

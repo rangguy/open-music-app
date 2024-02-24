@@ -42,7 +42,7 @@ class AlbumsService {
     const album = mapAlbumToModel(result.rows[0]);
 
     const querySongs = {
-      text: 'SELECT id, title, year, performer FROM songs WHERE "albumId" = $1',
+      text: 'SELECT id, title, year performer FROM songs WHERE "albumId" = $1',
       values: [id],
     };
     const resultSongs = await this._pool.query(querySongs);
@@ -81,6 +81,18 @@ class AlbumsService {
 
     if (!result.rows.length) {
       throw new NotFoundError("Album gagal dihapus. Id tidak ditemukan");
+    }
+  }
+
+  async addAlbumCoverById(id, albumCover) {
+    const query = {
+      text: "UPDATE albums SET cover = $1 WHERE id = $2 RETURNING id",
+      values: [albumCover, id],
+    };
+    const { rowCount } = await this._pool.query(query);
+
+    if (!rowCount) {
+      throw new NotFoundError("Gagal memperbarui album. Id tidak ditemukan.");
     }
   }
 }
