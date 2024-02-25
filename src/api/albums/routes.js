@@ -1,3 +1,5 @@
+const path = require('path');
+
 const routes = (handler) => [
   // menambah album
   {
@@ -42,6 +44,15 @@ const routes = (handler) => [
     handler: handler.deleteAlbumLikeByIdHandler,
     options: {
       auth: "openmusicapp_jwt",
+    },
+  },
+  {
+    method: "GET",
+    path: "/albums/covers/{param*}",
+    handler: {
+      directory: {
+        path: path.join(__dirname, "../uploads/file/images"),
+      },
     },
   },
 ];
