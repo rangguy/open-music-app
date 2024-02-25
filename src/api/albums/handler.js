@@ -1,5 +1,5 @@
 /* eslint-disable object-curly-newline */
-const autoBind = require('auto-bind');
+const autoBind = require("auto-bind");
 
 class AlbumsHandler {
   constructor(service, validator) {
@@ -65,6 +65,52 @@ class AlbumsHandler {
       status: "success",
       message: "Album berhasil dihapus",
     };
+  }
+
+  async postAlbumLikeByIdHandler(request, h) {
+    const { id: albumId } = request.params;
+    const { id: userId } = request.auth.credentials;
+
+    await this._service.checkValidAlbum(albumId);
+    await this._service.checkLikes(albumId, userId);
+    await this._service.addAlbumLikeById(albumId, userId);
+    return h
+      .response({
+        status: "success",
+        message: "Berhasil menyukai album",
+      })
+      .code(201);
+  }
+
+  async getAlbumLikesByIdHandler(request, h) {
+    const { id: albumId } = request.params;
+    await this._service.checkValidAlbum(albumId);
+    const { cache, likes } = await this._service.getAlbumLikesById(albumId);
+    const response = h.response({
+      status: "success",
+      data: {
+        likes,
+      },
+    });
+    if (cache) {
+      response.header("X-Data-Source", "cache");
+    }
+    return response;
+  }
+
+  async deleteAlbumLikeByIdHandler(request, h) {
+    const { id: albumId } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._service.checkValidAlbum(albumId);
+    await this._service.deleteAlbumLike(albumId, credentialId);
+
+    return h
+      .response({
+        status: "success",
+        message: "Berhasil membatalkan like",
+      })
+      .code(200);
   }
 }
 
