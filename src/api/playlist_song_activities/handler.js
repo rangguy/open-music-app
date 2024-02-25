@@ -13,12 +13,16 @@ class PlaylistSongActivitiesHandler {
     const { id: credentialId } = request.auth.credentials;
 
     await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
-    const activities = await this._playlistSongActivitiesService.getSongActivitiesById(playlistId);
+    const activities = await this._playlistSongActivitiesService.getSongActivitiesById(
+      playlistId,
+    );
 
     return {
       status: "success",
-      playlistId,
-      activities,
+      data: {
+        playlistId,
+        activities,
+      },
     };
   }
 }

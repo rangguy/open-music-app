@@ -22,6 +22,14 @@ class PlaylistSongsHandler {
 
     await this._service.addPlaylistSong(playlistId, songId);
 
+    const action = "add";
+    await this._service.addToPlaylistSongActivities(
+      playlistId,
+      songId,
+      credentialId,
+      action,
+    );
+
     const response = h.response({
       status: "success",
       message: "Lagu berhasil ditambahkan ke playlist",
@@ -61,6 +69,14 @@ class PlaylistSongsHandler {
     await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
 
     await this._service.deletePlaylistSong(songId, playlistId);
+
+    const action = "delete";
+    await this._service.addToPlaylistSongActivities(
+      playlistId,
+      songId,
+      credentialId,
+      action,
+    );
 
     return {
       status: "success",
